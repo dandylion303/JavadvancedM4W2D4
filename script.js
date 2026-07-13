@@ -1,67 +1,105 @@
-//1- Fetch endpoint to retrieve books
-//2- Cycle through books to get book
-//3- Make Cards with books and buttons (add to cart + liked)
-//4- Add EventListener on click to save to cart || liked
-//5- When book added to cart -> Make it known on card
-//6- Functioning Search bar after 3 char typed
-//7- Cart section
-//8- Liked section
+const booksRow = document.getElementById('booksRow')
+const search = document.getElementById('search')
+const submitBtn = document.getElementById('submitBtn')
+let allBooks = []
 
-async function getBooks(){
-    try{
-       const result = await fetch('https://striveschool-api.herokuapp.com/books')
-       const data = await result.json()
-       console.log(data)
+const getBooks = async () => {
+    try {
+        const result = await fetch('https://striveschool-api.herokuapp.com/books')
+        const data = await result.json()
+        allBooks = data
+        displayBooks(data)
     }
-    catch(error){
-        console.log(error)
+
+    catch (error) {
+        console.error(error)
     }
 }
+
 getBooks()
 
 
-/* 
-function displayBooks(books){
-    const booksCard = books.map(book=> return){
-        
-    }
-} 
-*/
-
-/*    
- function listBooks(books){
-    for(book of books){
-    const card = booksCard(books)
-        }
-    } 
-*/
-
-/* 
-function listBooks(books){
-    books.forEach(book =>{
-        const card = booksCard(book)
-    })
-}
- */
-
-
-/* {<div class="card">
+/* {
+<div class="card" style="width: 18rem;">
   <img src="..." class="card-img-top" alt="...">
   <div class="card-body">
-    <h5 class="card-title">Book title</h5>
-    <p class="card-text">price</p>
+    <h5 class="card-title">Card title</h5>
+    <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card’s content.</p>
   </div>
-  <ul class="list-group list-group-flush">
-    <li class="list-group-item">category</li>
-  </ul>
   <div class="card-body">
-    <a href="#" class="card-link">Add to cart</a>
-    <a href="#" class="card-link">Favourites</a>
+    <a href="#" class="card-link">Card link</a>
+    <a href="#" class="card-link">Another link</a>
   </div>
-</div>} */
+</div>
 
+} */
 
+const createBookCard = ({ title, img, price, category }) => {
+    const col = document.createElement('div')
+    col.classList.add('col-4','col-md-2','mb-3')
 
-function createBookCard = (book) =>{
-const col=
+    const card = document.createElement('div')
+    card.classList.add('card', 'h-100','text-center')
+    col.appendChild(card)
+
+    const bookCover = document.createElement('img')
+    bookCover.classList.add('card-img-top', 'h-100')
+    bookCover.src = img
+    bookCover.alt = title
+    card.appendChild(bookCover)
+
+    const cardBody = document.createElement('div')
+    cardBody.classList.add('card-body')
+    card.appendChild(cardBody)
+
+    const bookTitle = document.createElement('h5')
+    bookTitle.classList.add('card-title')
+    bookTitle.innerText = title
+    cardBody.appendChild(bookTitle)
+
+    const bookCategory = document.createElement('p')
+    bookCategory.classList.add('card-text')
+    bookCategory.innerText = category
+    cardBody.appendChild(bookCategory)
+
+    const bookPrice = document.createElement('p')
+    bookPrice.classList.add('card-text')
+    bookPrice.innerText = `${price}€`
+    cardBody.appendChild(bookPrice)
+
+    const addToCart = document.createElement('a')
+    addToCart.classList.add('card-link','d-block','link-underline-opacity-0','link-underline')
+    addToCart.innerText = "Aggiungi al Carrello"
+    cardBody.appendChild(addToCart)
+
+    const jumpButton = document.createElement('a')
+    jumpButton.classList.add('card-link','d-block','link-underline-opacity-0','link-underline')
+    jumpButton.innerText = "Salta!"
+    cardBody.appendChild(jumpButton)
+
+    return col
 }
+
+/* const displayBooks = (books)=>{
+    for(const book of books){
+        const cardBook = createBookCard(book)
+
+        booksRow.appendChild(cardBook)
+    }
+
+} */
+
+const displayBooks = (books) => {
+    booksRow.innerHTML = ''
+    const cardBooks = books.map(book => createBookCard(book))
+   // cardBook.forEach(card => booksRow.appendChild(card))
+   booksRow.append(...cardBooks)
+
+}
+
+
+submitBtn.addEventListener('click',()=>{
+    const bookSearch = search.value.trim().toLowerCase()
+    const bookFiltered = allBooks.filter(book=>book.title.toLowerCase().includes(bookSearch))
+    displayBooks(bookFiltered)
+})
