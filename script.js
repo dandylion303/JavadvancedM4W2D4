@@ -1,7 +1,13 @@
 const booksRow = document.getElementById('booksRow')
 const search = document.getElementById('search')
 const submitBtn = document.getElementById('submitBtn')
+const modalBody = document.getElementById('modalBody')
+const clearBtn = document.getElementById('clear')
+const modalFooter = document.getElementById('modalFooter')
+
 let allBooks = []
+let cartBooks = []
+
 
 const getBooks = async () => {
     try {
@@ -19,27 +25,14 @@ const getBooks = async () => {
 getBooks()
 
 
-/* {
-<div class="card" style="width: 18rem;">
-  <img src="..." class="card-img-top" alt="...">
-  <div class="card-body">
-    <h5 class="card-title">Card title</h5>
-    <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card’s content.</p>
-  </div>
-  <div class="card-body">
-    <a href="#" class="card-link">Card link</a>
-    <a href="#" class="card-link">Another link</a>
-  </div>
-</div>
 
-} */
-
-const createBookCard = ({ title, img, price, category }) => {
+//funzione che crea le card usando come parametri solo alcune parti dell'array
+const createBookCard = ({ title, img, price, category, asin }) => {
     const col = document.createElement('div')
-    col.classList.add('col-4','col-md-2','mb-3')
+    col.classList.add('col-4', 'col-md-2', 'mb-5')
 
     const card = document.createElement('div')
-    card.classList.add('card', 'h-100','text-center')
+    card.classList.add('card', 'h-100', 'text-center')
     col.appendChild(card)
 
     const bookCover = document.createElement('img')
@@ -67,15 +60,37 @@ const createBookCard = ({ title, img, price, category }) => {
     bookPrice.innerText = `${price}€`
     cardBody.appendChild(bookPrice)
 
-    const addToCart = document.createElement('a')
-    addToCart.classList.add('card-link','d-block','link-underline-opacity-0','link-underline')
-    addToCart.innerText = "Aggiungi al Carrello"
-    cardBody.appendChild(addToCart)
+    const addToCartBtn = document.createElement('a')
+    addToCartBtn.classList.add('btn', 'btn-success', 'd-block', 'link-underline-opacity-0', 'link-underline', 'my-1')
+    addToCartBtn.innerText = "Add to Cart"
+    cardBody.appendChild(addToCartBtn)
+    addToCartBtn.addEventListener('click', () => addToCart({ title, img, price, category, asin }))
 
     const jumpButton = document.createElement('a')
-    jumpButton.classList.add('card-link','d-block','link-underline-opacity-0','link-underline')
-    jumpButton.innerText = "Salta!"
+    jumpButton.classList.add('btn', 'd-block', 'link-underline-opacity-0', 'link-underline', 'btn-secondary', 'my-1')
+    jumpButton.innerText = "Remove"
     cardBody.appendChild(jumpButton)
+    jumpButton.addEventListener('click', () => {
+        col.remove()
+    })
+
+    const detailButton = document.createElement('a')
+    detailButton.classList.add('btn', 'd-block', 'link-underline-opacity-0', 'link-underline', 'btn-primary')
+    detailButton.setAttribute('target', '_blank')
+    detailButton.innerText = "Dettagli"
+    detailButton.href = `details.html?id=${asin}`
+    cardBody.appendChild(detailButton)
+
+
+    //TEMPORANEO DA LEVARE
+    const removeButton = document.createElement('button')
+    removeButton.classList.add('btn')
+    removeButton.innerText = 'rimuovi'
+    cardBody.appendChild(removeButton)
+    removeButton.addEventListener('click', () => {
+        cartBooks = cartBooks.filter(cartBook => cartBook.asin !== asin)
+        displayCart()
+    })
 
     return col
 }
@@ -92,14 +107,81 @@ const createBookCard = ({ title, img, price, category }) => {
 const displayBooks = (books) => {
     booksRow.innerHTML = ''
     const cardBooks = books.map(book => createBookCard(book))
-   // cardBook.forEach(card => booksRow.appendChild(card))
-   booksRow.append(...cardBooks)
+    // cardBook.forEach(card => booksRow.appendChild(card))
+    booksRow.append(...cardBooks)
 
 }
 
 
-submitBtn.addEventListener('click',()=>{
+submitBtn.addEventListener('click', () => {
     const bookSearch = search.value.trim().toLowerCase()
-    const bookFiltered = allBooks.filter(book=>book.title.toLowerCase().includes(bookSearch))
+    const bookFiltered = allBooks.filter(book => book.title.toLowerCase().includes(bookSearch))
     displayBooks(bookFiltered)
 })
+
+const addToCart = (book) => {
+    const cartBook = cartBooks.find(cartbook => cartbook.asin === book.asin)
+    if (cartBook) {
+        cartBook.quantity++;
+    }
+    else {
+        cartBooks.push({ ...book, quantity: 1 })
+    }
+    displayCart()
+}
+
+
+//GESTIONE DEL MODALE CARRELLO
+const displayCart = () => {
+    modalBody.innerHTML = ''
+
+    if (cartBooks.length === 0) {
+        modalBody.innerHTML = "non c'è nulla qui"
+        clearBtn.classList.toggle('d-none')
+    }
+
+    else {
+        cartBooks.forEach(book => {
+            const cartItem = document.createElement('div')
+            cartItem.classList.add('d-flex', 'align-items-center', 'justify-content-between','mb-2')
+
+            const thumbCover = document.createElement('img')
+            thumbCover.src = book.img
+            thumbCover.alt = book.title
+            thumbCover.classList.add('rounded', 'me-3', 'thumbCover')
+
+            const bookTitle = document.createElement('small')
+            bookTitle.classList.add('thumbTitle')
+            bookTitle.innerText = book.title
+
+            const bookPrice = document.createElement('small')
+            bookPrice.classList.add('thumbPrice')
+            bookPrice.innerText = `${book.price}€ x ${book.quantity}`
+
+            cartItem.append(thumbCover, bookTitle, bookPrice)
+            modalBody.append(cartItem)
+
+
+        })
+    }
+
+    const pricesOfItemsInCart = cartBooks.map(cartBook => cartBook.price*cartBook.quantity)
+    let totalCartValue = pricesOfItemsInCart.reduce((total, price) => {
+        return total + price
+    })
+    modalFooter.innerText= totalCartValue
+
+}
+
+
+
+
+
+clearBtn.addEventListener('click', () => {
+    cartBooks = []
+    displayCart()
+})
+
+
+
+
